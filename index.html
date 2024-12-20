@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Previous head section remains the same -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lifeline</title>
+  <style>
+    /* Previous styles remain the same until the grid styles */
+    body {
+      margin: 0;
+      background-color: #1a1a1a;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .wrapper {
+      width: 100%;
+      padding: 1in 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1in;
+      color: #dcdcdc;
+      font-size: 1rem;
+    }
+
+    .input-box {
+      margin-bottom: 10px;
+    }
+
+    .input-box label {
+      margin-right: 10px;
+      color: #dcdcdc;
+    }
+
+    select, input {
+      padding: 5px;
+      font-size: 0.9rem;
+      border: 1px solid #dcdcdc;
+      border-radius: 5px;
+      background-color: #1a1a1a;
+      color: #dcdcdc;
+      width: 150px;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-gap: 5px;
+      padding: 20px;
+    }
+
+    .square {
+      background-color: #dcdcdc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #1a1a1a;
+      cursor: pointer;
+    }
+
+    /* Updated grid view styles */
+    .grid.year-view {
+      grid-template-columns: repeat(10, 1fr);
+    }
+
+    .grid.year-view .square {
+      width: 50px;
+      height: 50px;
+      font-size: 14px;
+    }
+
+    .grid.month-view {
+      grid-template-columns: repeat(20, 1fr);
+    }
+
+    .grid.month-view .square {
+      width: 30px;
+      height: 30px;
+      font-size: 12px;
+    }
+
+    .grid.week-view {
+      grid-template-columns: repeat(40, 1fr);
+    }
+
+    .grid.week-view .square {
+      width: 20px;
+      height: 20px;
+      /* No font size needed as we're not showing text */
+    }
+
+    .error-message {
+      color: #ff4444;
+      font-size: 0.8rem;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<!-- Previous body HTML remains the same -->
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="input-box">
+        <!-- <label for="timeUnit">View By:</label> -->
+        <select id="timeUnit">
+          <option value="year">Years</option>
+          <option value="month">Months</option>
+          <option value="week">Weeks</option>
+        </select>
+      </div>
+      <div class="input-box">
+        <label for="birthDate">Birth Date:</label>
+        <input type="text" id="birthDate" placeholder="DD/MM/YYYY">
+        <div id="birthDateError" class="error-message">Please enter a valid date.</div>
+      </div>
+      <div class="input-box">
+        <label for="currentDate">This Date :</label>
+        <input type="text" id="currentDate" placeholder="DD/MM/YYYY">
+        <div id="currentDateError" class="error-message">Please enter a valid date.</div>
+      </div>
+    </div>
+    
+    <div class="container">
+      <div class="grid year-view"></div>
+    </div>
+  </div>
+
+  <script>
+    // Previous script remains the same until the updateGrid function
+    const grid = document.querySelector('.grid');
+    const timeUnitSelect = document.getElementById('timeUnit');
+    const birthDateInput = document.getElementById('birthDate');
+    const currentDateInput = document.getElementById('currentDate');
+    const birthDateError = document.getElementById('birthDateError');
+    const currentDateError = document.getElementById('currentDateError');
+
+    const GRID_SIZES = {
+      year: { total: 100, columns: 10 },
+      month: { total: 1200, columns: 20 },
+      week: { total: 5200, columns: 40 }
+    };
+
+    // Set current date as default
+    const today = new Date();
+    const formattedToday = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    currentDateInput.value = formattedToday;
+
+    function isValidDate(dateStr) {
+      if (!dateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return false;
+      
+      const [day, month, year] = dateStr.split('/').map(Number);
+      const date = new Date(year, month - 1, day);
+      
+      return date.getDate() === day &&
+             date.getMonth() === month - 1 &&
+             date.getFullYear() === year &&
+             year >= 1900 &&
+             year <= 3000;
+    }
+
+    function parseDate(dateStr) {
+      const [day, month, year] = dateStr.split('/').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function createGrid(timeUnit) {
+      grid.innerHTML = '';
+      grid.className = `grid ${timeUnit}-view`;
+
+      const squares = [];
+      for (let i = 0; i < GRID_SIZES[timeUnit].total; i++) {
+        const square = document.createElement('div');
+        square.classList.add('square');
+        squares.push(square);
+        grid.appendChild(square);
+      }
+
+      return squares;
+    }
+
+    function updateGrid() {
+      if (!birthDateInput.value) {
+        birthDateError.style.display = 'block';
+        return;
+      }
+
+      const timeUnit = timeUnitSelect.value;
+      
+      if (!isValidDate(birthDateInput.value)) {
+        birthDateError.style.display = 'block';
+        return;
+      } else {
+        birthDateError.style.display = 'none';
+      }
+
+      if (!isValidDate(currentDateInput.value)) {
+        currentDateError.style.display = 'block';
+        return;
+      } else {
+        currentDateError.style.display = 'none';
+      }
+
+      const birthDate = parseDate(birthDateInput.value);
+      const currentDate = parseDate(currentDateInput.value);
+      const squares = createGrid(timeUnit);
+      
+      squares.forEach((square, index) => {
+        let targetDate;
+        let displayValue = '';
+
+        switch(timeUnit) {
+          case 'year':
+            targetDate = new Date(birthDate.getFullYear() + index, birthDate.getMonth(), birthDate.getDate());
+            displayValue = targetDate.getFullYear();
+            break;
+
+          case 'month':
+            targetDate = new Date(birthDate.getFullYear(), birthDate.getMonth() + index, birthDate.getDate());
+            displayValue = (targetDate.getMonth() + 1).toString(); // Just the month number
+            break;
+
+          case 'week':
+            targetDate = new Date(birthDate.getTime() + (index * 7 * 24 * 60 * 60 * 1000));
+            // No display value for weeks
+            break;
+        }
+
+        const isLived = targetDate >= birthDate && targetDate <= currentDate;
+        square.textContent = displayValue;
+        square.style.backgroundColor = isLived ? '#ff9999' : '#dcdcdc';
+      });
+    }
+
+    timeUnitSelect.addEventListener('change', updateGrid);
+    birthDateInput.addEventListener('input', updateGrid);
+    currentDateInput.addEventListener('input', updateGrid);
+  </script>
+</body>
+</html>
